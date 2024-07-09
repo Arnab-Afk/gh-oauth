@@ -7,8 +7,17 @@ function GitHubCallback() {
         const code = urlParams.get('code');
 
         if (code) {
-            localStorage.setItem('github-code', code);
+            axios.post('http://localhost:5000/auth/github/callback',{
+            code
+            }).then(response => {
+            console.log(response.data);
+            localStorage.setItem('github-code', response.data.accessToken);
             window.location.href = '/starred';
+            }).catch(error => {
+            console.error('Error getting starred repos:', error);
+            });
+            console.log('code', response.data.accessToken);
+            
         }
     }, []);
 

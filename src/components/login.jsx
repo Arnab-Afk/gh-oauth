@@ -14,7 +14,7 @@
 */
 export default function Login() {
     const loginWithGitHub = () => {
-        const clientID = 'CLIENT_ID_HERE';
+        const clientID = 'Ov23lis3taWzpmsGOWBL';
         const redirectURI = 'http://localhost:5173/auth/github/callback';
         window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientID}&scope=read:user,public_repo&redirect_uri=${redirectURI}`;
     };

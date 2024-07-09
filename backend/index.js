@@ -1,43 +1,71 @@
-import {express} from 'express';
-import fetch from 'node-fetch';
+import express from 'express';
+import axios from 'axios';
 import bodyParser from 'body-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
+
+// Enable CORS for all routes
+app.use(cors());
+
+// Use body-parser to parse JSON bodies
 app.use(bodyParser.json());
 
-const CLIENT_ID = 'Ov23lis3taWzpmsGOWBL';
-const CLIENT_SECRET = '8f819671c83ec276a2eece1b7807f264ef6323e8';
+const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-app.post('/auth/github/callback/starred', async (req, res) => {
+// Endpoint to handle GitHub OAuth callback
+app.post('/auth/github/callback', async (req, res) => {
     const { code } = req.body;
 
-    // Exchange code for access token
-    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-            code,
-        }),
-    });
+    try {
+        const response = await axios.post(
+            'https://github.com/login/oauth/access_token',
+            {},
+            {
+                params: {
+                    client_id: CLIENT_ID,
+                    client_secret: CLIENT_SECRET,
+                    code: code,
+                    redirect_uri: 'http://localhost:5173/auth/github/callback',
+                },
+                headers: {
+                    'Accept': 'application/json',
+                    'Accept-Encoding': 'application/json',
+                },
+            }
+        );
 
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
+        const accessToken = response.data.access_token;
 
-    if (accessToken) {
-        const stars= await fetch('https://api.github.com/user/starred', {
+        if (accessToken) {
+            res.json({ success: true, accessToken });
+        } else {
+            res.json({ success: false, error: response.data.error });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Endpoint to fetch starred repos
+app.post('/auth/github/starred', async (req, res) => {
+    const { accessToken } = req.body;
+
+    try {
+        const starsResponse = await axios.get('https://api.github.com/user/starred', {
             headers: {
-                Authorization: `token ${accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
             },
         });
-        const data = await stars.json();
+
+        const data = starsResponse.data;
         res.json({ success: true, data });
-    } else {
-        res.json({ success: false });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

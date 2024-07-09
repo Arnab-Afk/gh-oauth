@@ -12,20 +12,6 @@ function App() {
   const [count, setCount] = useState(0)
   const code = localStorage.getItem('github-code');
   const [loggedIn, setLoggedIn] = useState(false);
-  useEffect(() => {
-    axios.post('https://github.com/login/oauth/access_token', {
-      client_id: import.meta.env.CLIENT_ID,
-      client_secret: import.meta.env.CLIENT_SECRET,
-      code,
-  }).then(response => {
-      const accessToken = response.data.access_token;
-      console.log('Access token:', accessToken);
-      
-  }).catch(error => {
-      console.error('Error getting access token:', error);
-  });
-  }, []);
-  console.log('code', code);
   return (
     <>
       <Router>
